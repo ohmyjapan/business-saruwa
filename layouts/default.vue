@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="bg-white shadow-subtle">
       <!-- Top Bar -->
-      <div class="bg-primary-800 text-white">
+      <div class="bg-gradient-to-r from-primary-800 to-primary-700 text-white">
         <div class="container mx-auto px-4">
           <div class="flex items-center justify-between py-2 text-sm">
             <div class="flex items-center space-x-4">
@@ -21,10 +21,28 @@
                 +81 123-456-789
               </a>
             </div>
-            <div class="hidden md:flex items-center space-x-4">
-              <NuxtLink to="/about" class="hover:text-primary-200">About Us</NuxtLink>
-              <NuxtLink to="/contact" class="hover:text-primary-200">Contact</NuxtLink>
-              <NuxtLink to="/faq" class="hover:text-primary-200">FAQ</NuxtLink>
+            <div class="flex items-center space-x-4">
+              <!-- Language Switcher -->
+              <div class="flex space-x-2">
+                <button
+                    @click="locale = 'ko'"
+                    class="text-white hover:text-primary-200"
+                    :class="{ 'font-bold': locale === 'ko' }"
+                >
+                  한국어
+                </button>
+                <span class="text-white">|</span>
+                <button
+                    @click="locale = 'en'"
+                    class="text-white hover:text-primary-200"
+                    :class="{ 'font-bold': locale === 'en' }"
+                >
+                  English
+                </button>
+              </div>
+              <NuxtLink to="/about" class="hover:text-primary-200">{{ $t('common.about_us') }}</NuxtLink>
+              <NuxtLink to="/contact" class="hover:text-primary-200">{{ $t('common.contact') }}</NuxtLink>
+              <NuxtLink to="/faq" class="hover:text-primary-200">{{ $t('common.faq') }}</NuxtLink>
             </div>
           </div>
         </div>
@@ -40,10 +58,10 @@
 
           <!-- Desktop Navigation -->
           <nav class="hidden md:flex items-center space-x-8">
-            <NuxtLink to="/" class="nav-link">Home</NuxtLink>
-            <NuxtLink to="/products" class="nav-link">Products</NuxtLink>
-            <NuxtLink to="/categories" class="nav-link">Categories</NuxtLink>
-            <NuxtLink to="/brands" class="nav-link">Brands</NuxtLink>
+            <NuxtLink to="/" class="nav-link">{{ $t('common.home') }}</NuxtLink>
+            <NuxtLink to="/products" class="nav-link">{{ $t('common.products') }}</NuxtLink>
+            <NuxtLink to="/categories" class="nav-link">{{ $t('common.categories') }}</NuxtLink>
+            <NuxtLink to="/brands" class="nav-link">{{ $t('common.brands') }}</NuxtLink>
           </nav>
 
           <!-- User Actions -->
@@ -65,7 +83,7 @@
               <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
               </svg>
-              <span class="ml-1 text-sm font-medium">Account</span>
+              <span class="ml-1 text-sm font-medium">{{ $t('common.account') }}</span>
             </NuxtLink>
 
             <NuxtLink
@@ -75,7 +93,7 @@
               <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
               </svg>
-              <span class="ml-1 text-sm font-medium hidden sm:inline">Cart</span>
+              <span class="ml-1 text-sm font-medium hidden sm:inline">{{ $t('common.cart') }}</span>
               <span
                   v-if="cartCount > 0"
                   class="absolute -top-2 -right-2 sm:right-auto sm:-top-2 sm:ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-primary-600 rounded-full"
@@ -101,8 +119,7 @@
           <div>
             <h3 class="text-lg font-bold mb-4">Wholesale<span class="text-primary-500">Hub</span></h3>
             <p class="text-secondary-300 mb-4">
-              Your trusted partner for wholesale products.
-              We offer competitive prices and quality products for businesses of all sizes.
+              {{ $t('footer.company_description') }}
             </p>
             <div class="flex space-x-4">
               <a href="#" class="text-secondary-300 hover:text-white">
@@ -130,51 +147,51 @@
 
           <!-- Quick Links -->
           <div>
-            <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ $t('footer.quick_links') }}</h3>
             <ul class="space-y-2">
               <li>
-                <NuxtLink to="/products" class="text-secondary-300 hover:text-white">Products</NuxtLink>
+                <NuxtLink to="/products" class="text-secondary-300 hover:text-white">{{ $t('common.products') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/categories" class="text-secondary-300 hover:text-white">Categories</NuxtLink>
+                <NuxtLink to="/categories" class="text-secondary-300 hover:text-white">{{ $t('common.categories') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/brands" class="text-secondary-300 hover:text-white">Brands</NuxtLink>
+                <NuxtLink to="/brands" class="text-secondary-300 hover:text-white">{{ $t('common.brands') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/about" class="text-secondary-300 hover:text-white">About Us</NuxtLink>
+                <NuxtLink to="/about" class="text-secondary-300 hover:text-white">{{ $t('common.about_us') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/contact" class="text-secondary-300 hover:text-white">Contact</NuxtLink>
+                <NuxtLink to="/contact" class="text-secondary-300 hover:text-white">{{ $t('common.contact') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/faq" class="text-secondary-300 hover:text-white">FAQ</NuxtLink>
+                <NuxtLink to="/faq" class="text-secondary-300 hover:text-white">{{ $t('common.faq') }}</NuxtLink>
               </li>
             </ul>
           </div>
 
           <!-- Policies -->
           <div>
-            <h3 class="text-lg font-semibold mb-4">Policies</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ $t('footer.policies') }}</h3>
             <ul class="space-y-2">
               <li>
-                <NuxtLink to="/privacy-policy" class="text-secondary-300 hover:text-white">Privacy Policy</NuxtLink>
+                <NuxtLink to="/privacy-policy" class="text-secondary-300 hover:text-white">{{ $t('footer.privacy_policy') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/terms-of-service" class="text-secondary-300 hover:text-white">Terms of Service</NuxtLink>
+                <NuxtLink to="/terms-of-service" class="text-secondary-300 hover:text-white">{{ $t('footer.terms_of_service') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/shipping-policy" class="text-secondary-300 hover:text-white">Shipping Policy</NuxtLink>
+                <NuxtLink to="/shipping-policy" class="text-secondary-300 hover:text-white">{{ $t('footer.shipping_policy') }}</NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/return-policy" class="text-secondary-300 hover:text-white">Return Policy</NuxtLink>
+                <NuxtLink to="/return-policy" class="text-secondary-300 hover:text-white">{{ $t('footer.return_policy') }}</NuxtLink>
               </li>
             </ul>
           </div>
 
           <!-- Contact -->
           <div>
-            <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ $t('footer.contact_us') }}</h3>
             <ul class="space-y-2">
               <li class="flex items-start">
                 <svg class="h-5 w-5 text-secondary-400 mr-2 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -194,9 +211,15 @@
               </li>
               <li class="flex items-center">
                 <svg class="h-5 w-5 text-secondary-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+                <span class="text-secondary-300">+81 123-456-789</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="h-5 w-5 text-secondary-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-14a3 3 0 00-3 3v2H7a1 1 0 000 2h1v1a1 1 0 01-1 1 1 1 0 100 2h6a1 1 0 100-2H9.83c.11-.313.17-.65.17-1v-1h1a1 1 0 100-2h-1V7a1 1 0 112 0 1 1 0 102 0 3 3 0 00-3-3z" clip-rule="evenodd" />
                 </svg>
-                <span class="text-secondary-300">Mon-Fri, 9:00 AM - 6:00 PM JST</span>
+                <span class="text-secondary-300">{{ $t('footer.business_hours') }}</span>
               </li>
             </ul>
           </div>
@@ -205,7 +228,7 @@
         <!-- Copyright -->
         <div class="pt-8 mt-8 border-t border-secondary-800 text-center">
           <p class="text-secondary-400 text-sm">
-            &copy; {{ new Date().getFullYear() }} WholesaleHub. All rights reserved.
+            {{ $t('footer.copyright', { year: new Date().getFullYear() }) }}
           </p>
         </div>
       </div>
@@ -224,7 +247,7 @@
           <div class="h-full flex flex-col bg-white shadow-xl overflow-y-auto">
             <!-- Mobile menu header -->
             <div class="p-4 border-b border-secondary-200 flex items-center justify-between">
-              <h2 class="text-lg font-medium text-secondary-900">Menu</h2>
+              <h2 class="text-lg font-medium text-secondary-900">{{ $t('header.menu') }}</h2>
               <button
                   type="button"
                   class="text-secondary-600 hover:text-secondary-900"
@@ -245,28 +268,28 @@
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Home
+                    {{ $t('common.home') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/products"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Products
+                    {{ $t('common.products') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/categories"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Categories
+                    {{ $t('common.categories') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/brands"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Brands
+                    {{ $t('common.brands') }}
                   </NuxtLink>
                 </div>
               </div>
@@ -278,21 +301,21 @@
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    About Us
+                    {{ $t('common.about_us') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/contact"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Contact
+                    {{ $t('common.contact') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/faq"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    FAQ
+                    {{ $t('common.faq') }}
                   </NuxtLink>
                 </div>
               </div>
@@ -304,21 +327,21 @@
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    My Account
+                    {{ $t('header.my_account') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/login"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Log In
+                    {{ $t('common.login') }}
                   </NuxtLink>
                   <NuxtLink
                       to="/register"
                       class="block px-3 py-2 rounded-md text-base font-medium text-secondary-900 hover:bg-secondary-50"
                       @click="mobileMenuOpen = false"
                   >
-                    Register
+                    {{ $t('common.register') }}
                   </NuxtLink>
                 </div>
               </div>
@@ -333,7 +356,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useCartStore } from '~/stores/cart';
+import { useI18n } from 'vue-i18n';
 
+const { t, locale } = useI18n();
 const cartStore = useCartStore();
 const { cartCount } = storeToRefs(cartStore);
 
@@ -363,10 +388,3 @@ onMounted(() => {
   @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary-600 rounded-full;
 }
 </style>
-0 20 20" fill="currentColor">
-<path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-</svg>
-<span class="text-secondary-300">+81 123-456-789</span>
-</li>
-<li class="flex items-center">
-<svg class="h-5 w-5 text-secondary-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0

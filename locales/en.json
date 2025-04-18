@@ -1,0 +1,47 @@
+{
+  "common": {
+    "home": "Home",
+    "products": "Products",
+    "categories": "Categories",
+    "brands": "Brands",
+    "account": "Account",
+    "cart": "Cart",
+    "login": "Login",
+    "register": "Register",
+    "about_us": "About Us",
+    "contact": "Contact",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "title": "Your Trusted Wholesale Partner",
+    "subtitle": "Premium products at competitive prices for your business needs. Streamlined ordering, reliable shipping, and exceptional service.",
+    "browse_products": "Browse Products",
+    "register_now": "Register Now"
+  },
+  "products": {
+    "featured": "Featured Products",
+    "new_arrivals": "New Arrivals",
+    "view_all": "View All"
+  },
+  "benefits": {
+    "why_choose_us": "Why Choose Us",
+    "competitive_pricing": "Competitive Pricing",
+    "pricing_text": "Get the best wholesale prices with volume discounts and special deals for regular customers.",
+    "quality_guaranteed": "Quality Guaranteed",
+    "quality_text": "All products are sourced from trusted suppliers and undergo rigorous quality checks.",
+    "fast_shipping": "Fast Shipping",
+    "shipping_text": "Efficient order processing and reliable shipping partners ensure timely delivery of your orders."
+  },
+  "footer": {
+    "company_description": "Your trusted partner for wholesale products. We offer competitive prices and quality products for businesses of all sizes.",
+    "quick_links": "Quick Links",
+    "policies": "Policies",
+    "privacy_policy": "Privacy Policy",
+    "terms_of_service": "Terms of Service",
+    "shipping_policy": "Shipping Policy",
+    "return_policy": "Return Policy",
+    "contact_us": "Contact Us",
+    "business_hours": "Mon-Fri, 9:00 AM - 6:00 PM JST",
+    "copyright": "© {year} WholesaleHub. All rights reserved."
+  }
+}

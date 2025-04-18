@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxtjs/tailwindcss',
+    // Remove @nuxtjs/i18n
   ],
 
   runtimeConfig: {
@@ -55,6 +56,8 @@ export default defineNuxtConfig({
   build: {
     transpile: ['@headlessui/vue', '@heroicons/vue']
   },
+
+  // Remove i18n configuration
 
   compatibilityDate: '2025-04-15'
 })
