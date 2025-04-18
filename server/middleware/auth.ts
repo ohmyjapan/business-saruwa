@@ -9,10 +9,18 @@ export default defineEventHandler((event) => {
     // Get the request path
     const path = event.node.req.url || '';
 
+    // For development only: Allow all routes without authentication
+    // Remove or modify this condition when implementing real authentication
+    if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode - skipping authentication checks');
+        return;
+    }
+
     // Skip auth for public routes
     if (
         path.startsWith('/api/auth') ||
-        path.startsWith('/api/products') && !path.includes('admin')
+        path.startsWith('/api/products') && !path.includes('admin') ||
+        path.startsWith('/api/public')
     ) {
         return;
     }

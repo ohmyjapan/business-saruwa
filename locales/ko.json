@@ -1,0 +1,47 @@
+{
+  "common": {
+    "home": "홈",
+    "products": "제품",
+    "categories": "카테고리",
+    "brands": "브랜드",
+    "account": "계정",
+    "cart": "장바구니",
+    "login": "로그인",
+    "register": "회원가입",
+    "about_us": "회사 소개",
+    "contact": "문의하기",
+    "faq": "자주 묻는 질문"
+  },
+  "hero": {
+    "title": "신뢰할 수 있는 도매 파트너",
+    "subtitle": "비즈니스 요구 사항에 맞는 경쟁력 있는 가격의 프리미엄 제품. 간소화된 주문, 신뢰할 수 있는 배송 및 탁월한 서비스.",
+    "browse_products": "제품 둘러보기",
+    "register_now": "지금 등록하기"
+  },
+  "products": {
+    "featured": "추천 제품",
+    "new_arrivals": "신규 제품",
+    "view_all": "모두 보기"
+  },
+  "benefits": {
+    "why_choose_us": "왜 저희를 선택해야 하나요?",
+    "competitive_pricing": "경쟁력 있는 가격",
+    "pricing_text": "정기 고객을 위한 볼륨 할인 및 특별 거래와 함께 최고의 도매 가격을 받으세요.",
+    "quality_guaranteed": "품질 보증",
+    "quality_text": "모든 제품은 신뢰할 수 있는 공급업체에서 소싱되며 엄격한 품질 검사를 거칩니다.",
+    "fast_shipping": "빠른 배송",
+    "shipping_text": "효율적인 주문 처리와 신뢰할 수 있는 배송 파트너가 주문의 정시 배송을 보장합니다."
+  },
+  "footer": {
+    "company_description": "귀하의 신뢰할 수 있는 도매 제품 파트너. 모든 규모의 기업을 위한 경쟁력 있는 가격과 품질 제품을 제공합니다.",
+    "quick_links": "빠른 링크",
+    "policies": "정책",
+    "privacy_policy": "개인정보 보호정책",
+    "terms_of_service": "서비스 약관",
+    "shipping_policy": "배송 정책",
+    "return_policy": "반품 정책",
+    "contact_us": "문의하기",
+    "business_hours": "영업시간: 월-금, 오전 9:00 - 오후 6:00 KST",
+    "copyright": "© {year} WholesaleHub. 모든 권리 보유."
+  }
+}
