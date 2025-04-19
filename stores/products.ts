@@ -1,67 +1,6 @@
+// stores/products.ts
 import { defineStore } from 'pinia';
-
-export interface ProductImage {
-    id: string;
-    src: string;
-    alt: string;
-    isDefault: boolean;
-}
-
-export interface ProductPrice {
-    amount: number;
-    currency: string;
-    minQuantity?: number;
-}
-
-export interface ProductVariant {
-    id: string;
-    name: string;
-    sku: string;
-    janCode: string;
-    stock: number;
-    prices: ProductPrice[];
-}
-
-export interface Product {
-    id: string;
-    name: string;
-    description: string;
-    janCode: string;
-    sku: string;
-    brand: string;
-    category: string;
-    subcategory?: string;
-    tags: string[];
-    minOrderQuantity: number;
-    stock: number;
-    pricing: {
-        basePrice: number;
-        currency: string;
-        discountPercentage?: number;
-        volumeDiscounts?: {
-            minQuantity: number;
-            discount: number;
-        }[];
-    };
-    images: ProductImage[];
-    variants?: ProductVariant[];
-    specifications?: Record<string, string>;
-    isActive: boolean;
-    isNew: boolean;
-    isFeatured: boolean;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface ProductFilter {
-    categories?: string[];
-    brands?: string[];
-    tags?: string[];
-    minPrice?: number;
-    maxPrice?: number;
-    inStock?: boolean;
-    query?: string;
-}
+import type { Product, ProductImage, ProductFilter } from '~/types';
 
 export const useProductStore = defineStore('products', {
     state: () => ({

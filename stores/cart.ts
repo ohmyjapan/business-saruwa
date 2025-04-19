@@ -1,64 +1,6 @@
+// stores/cart.ts
 import { defineStore } from 'pinia';
-import { Product, ProductVariant } from './products';
-
-export interface CartItemVariant {
-    id: string;
-    name: string;
-    sku: string;
-    janCode: string;
-    price: number;
-}
-
-export interface CartItem {
-    id: string;
-    productId: string;
-    name: string;
-    janCode: string;
-    brand: string;
-    sku: string;
-    variantId?: string;
-    variant?: CartItemVariant;
-    price: number;
-    originalPrice?: number;
-    quantity: number;
-    minOrderQuantity: number;
-    image: string;
-    notes?: string;
-}
-
-export interface CustomerInfo {
-    companyName: string;
-    companyRegistration?: string;
-    contactName: string;
-    email: string;
-    phone: string;
-    address: {
-        line1: string;
-        line2?: string;
-        city: string;
-        stateRegion: string;
-        postalCode: string;
-        country: string;
-    };
-    billingAddress?: {
-        sameAsShipping: boolean;
-        line1?: string;
-        line2?: string;
-        city?: string;
-        stateRegion?: string;
-        postalCode?: string;
-        country?: string;
-    };
-    taxId?: string;
-    notes?: string;
-}
-
-export interface PriceSummary {
-    subtotal: number;
-    discount: number;
-    tax: number;
-    total: number;
-}
+import type { Product, CartItem, CartItemVariant, CustomerInfo, PriceSummary, ProductVariant } from '~/types';
 
 export const useCartStore = defineStore('cart', {
     state: () => ({
@@ -135,7 +77,7 @@ export const useCartStore = defineStore('cart', {
 
             if (!state.customer.billingAddress.sameAsShipping) {
                 const billing = state.customer.billingAddress;
-                if (!billing.line1 || !billing.city || !billing.state ||
+                if (!billing.line1 || !billing.city || !billing.stateRegion ||
                     !billing.postalCode || !billing.country) {
                     return false;
                 }

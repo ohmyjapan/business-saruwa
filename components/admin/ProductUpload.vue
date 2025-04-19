@@ -340,3 +340,4 @@ const uploadFile = async () => {
     isUploading.value = false;
   }
 };
+</script>

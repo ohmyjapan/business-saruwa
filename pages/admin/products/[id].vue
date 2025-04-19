@@ -26,6 +26,15 @@
       </button>
     </div>
 
+    <!-- Debug info - REMOVE AFTER DEBUGGING -->
+    <div class="bg-gray-100 p-4 rounded-md mb-4">
+      <h3 class="font-bold mb-2">Debug Info:</h3>
+      <p>Route ID: {{ $route.params.id }}</p>
+      <p>Product found: {{ product ? 'Yes' : 'No' }}</p>
+      <p>Loading: {{ loading }}</p>
+      <p>Error: {{ error }}</p>
+    </div>
+
     <!-- Edit form -->
     <div v-else>
       <div class="flex justify-between items-center mb-6">
@@ -458,7 +467,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useProductStore, Product, ProductImage } from '~/stores/products';
+// Import types from your types directory instead of from store files directly
+import type { Product, ProductImage } from '~/types';
+import { useProductStore } from '~/stores/products';
 import { randomUUID } from 'crypto';
 
 // Tell Nuxt to use the admin layout
@@ -485,8 +496,14 @@ const validationErrors = reactive<Record<string, string>>({});
 // Get product ID from route
 const productId = computed(() => route.params.id as string);
 
+// Explicitly check and log the route and params for debugging
+watch(() => route.params, (newParams) => {
+  console.log('Route params changed:', newParams);
+}, { immediate: true });
+
 // Computed property to get product from store
 const product = computed(() => {
+  console.log('Looking for product with ID:', productId.value);
   const foundProduct = productStore.getProductById(productId.value);
   console.log('Found product in store:', foundProduct);
   return foundProduct;
@@ -528,7 +545,7 @@ const categories = computed(() => productStore.categories);
 // Helper function to get image URL
 const getImageUrl = (imagePath: string): string => {
   // Check if the path is already a URL
-  if (imagePath.startsWith('http')) {
+  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
     return imagePath;
   }
 
@@ -567,13 +584,15 @@ const handleFileUpload = (event: Event) => {
     Array.from(input.files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const isFirstImage = form.images.length === 0;
-        form.images.push({
-          id: randomUUID(),
-          src: e.target?.result as string,
-          alt: file.name,
-          isDefault: isFirstImage
-        });
+        if (e.target && e.target.result) {
+          const isFirstImage = form.images.length === 0;
+          form.images.push({
+            id: randomUUID(),
+            src: e.target.result as string,
+            alt: file.name,
+            isDefault: isFirstImage
+          });
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -701,6 +720,7 @@ const saveProduct = async () => {
     // Navigate back to products list
     router.push('/admin/products');
   } catch (err: any) {
+    console.error('Error saving product:', err);
     error.value = err.message || 'Failed to save product';
   } finally {
     isSaving.value = false;
@@ -720,36 +740,47 @@ const loadProduct = async () => {
 
     console.log('Loading product with ID:', productId.value);
 
-    // Get product from store by ID
-    const storeProduct = productStore.getProductById(productId.value);
+    // First ensure we have products loaded
+    if (productStore.products.length === 0) {
+      console.log('Products array is empty, fetching all products...');
+      await productStore.fetchProducts();
+      console.log('Products loaded:', productStore.products.length);
+    }
 
-    if (storeProduct) {
-      console.log('Found product in store:', storeProduct);
+    // Get product from store by ID
+    let currentProduct = productStore.getProductById(productId.value);
+
+    if (currentProduct) {
+      console.log('Found product in store:', currentProduct.name);
       // Copy product data to form
-      Object.assign(form, storeProduct);
+      Object.assign(form, JSON.parse(JSON.stringify(currentProduct)));
 
       // Initialize spec keys
-      if (storeProduct.specifications) {
-        specKeys.value = Object.keys(storeProduct.specifications);
+      if (currentProduct.specifications) {
+        specKeys.value = Object.keys(currentProduct.specifications);
       }
     } else {
       console.log('Product not found in store, fetching from API...');
-      // Try to fetch the product
-      await productStore.fetchProductById(productId.value);
-      const fetchedProduct = productStore.currentProduct;
+      try {
+        // Try to fetch the product
+        currentProduct = await productStore.fetchProductById(productId.value);
 
-      if (fetchedProduct) {
-        console.log('Fetched product from API:', fetchedProduct);
-        // Copy product data to form
-        Object.assign(form, fetchedProduct);
+        if (currentProduct) {
+          console.log('Fetched product from API:', currentProduct.name);
+          // Copy product data to form
+          Object.assign(form, JSON.parse(JSON.stringify(currentProduct)));
 
-        // Initialize spec keys
-        if (fetchedProduct.specifications) {
-          specKeys.value = Object.keys(fetchedProduct.specifications);
+          // Initialize spec keys
+          if (currentProduct.specifications) {
+            specKeys.value = Object.keys(currentProduct.specifications);
+          }
+        } else {
+          console.log('Product not found in API');
+          error.value = 'Product not found';
         }
-      } else {
-        console.log('Product not found in API');
-        error.value = 'Product not found';
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        error.value = 'Failed to fetch product';
       }
     }
   } catch (err: any) {
@@ -764,21 +795,12 @@ const loadProduct = async () => {
 watch(productId, () => {
   console.log('Product ID changed to:', productId.value);
   loadProduct();
-});
+}, { immediate: true });
 
 // Initialize component
 onMounted(() => {
-  console.log('Admin product edit page mounted, loading products...');
-
-  // Pre-fetch all products if not already loaded
-  if (productStore.products.length === 0) {
-    productStore.fetchProducts().then(() => {
-      console.log('Products loaded:', productStore.products.length);
-      loadProduct();
-    });
-  } else {
-    loadProduct();
-  }
+  console.log('Admin product edit page mounted');
+  loadProduct();
 });
 </script>
 
