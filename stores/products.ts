@@ -208,9 +208,28 @@ export const useProductStore = defineStore('products', {
             this.error = null;
 
             try {
+                console.log('Fetching product with ID:', id);
                 const { data } = await useFetch(`/api/products/${id}`);
-                this.currentProduct = data.value as Product;
-                return this.currentProduct;
+
+                if (data.value) {
+                    // Store the product in the currentProduct ref
+                    this.currentProduct = data.value as Product;
+
+                    // Also add it to the products array if it's not already there
+                    const existingIndex = this.products.findIndex(p => p.id === id);
+                    if (existingIndex >= 0) {
+                        // Update existing product
+                        this.products[existingIndex] = this.currentProduct;
+                    } else {
+                        // Add new product
+                        this.products.push(this.currentProduct);
+                    }
+
+                    return this.currentProduct;
+                } else {
+                    this.error = 'Product not found';
+                    return null;
+                }
             } catch (error: any) {
                 this.error = error.message || `Failed to fetch product with ID: ${id}`;
                 console.error(`Error fetching product ${id}:`, error);

@@ -485,6 +485,13 @@ const validationErrors = reactive<Record<string, string>>({});
 // Get product ID from route
 const productId = computed(() => route.params.id as string);
 
+// Computed property to get product from store
+const product = computed(() => {
+  const foundProduct = productStore.getProductById(productId.value);
+  console.log('Found product in store:', foundProduct);
+  return foundProduct;
+});
+
 // Default empty form state
 const emptyForm = {
   id: '',
@@ -507,7 +514,9 @@ const emptyForm = {
   specifications: {} as Record<string, string>,
   isActive: true,
   isNew: false,
-  isFeatured: false
+  isFeatured: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
 };
 
 // Form reactive state
@@ -670,7 +679,16 @@ const saveProduct = async () => {
     });
     form.specifications = updatedSpecs;
 
+    // Update the updatedAt timestamp
+    form.updatedAt = new Date().toISOString();
+
     // In a real application, you would call your API here
+    // For example:
+    // await useFetch(`/api/admin/products/${form.id}`, {
+    //   method: 'PUT',
+    //   body: form
+    // });
+
     // For now, we'll just wait 1 second to simulate an API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -700,23 +718,28 @@ const loadProduct = async () => {
     loading.value = true;
     error.value = null;
 
-    // Get product from store by ID
-    const product = productStore.getProductById(productId.value);
+    console.log('Loading product with ID:', productId.value);
 
-    if (product) {
+    // Get product from store by ID
+    const storeProduct = productStore.getProductById(productId.value);
+
+    if (storeProduct) {
+      console.log('Found product in store:', storeProduct);
       // Copy product data to form
-      Object.assign(form, product);
+      Object.assign(form, storeProduct);
 
       // Initialize spec keys
-      if (product.specifications) {
-        specKeys.value = Object.keys(product.specifications);
+      if (storeProduct.specifications) {
+        specKeys.value = Object.keys(storeProduct.specifications);
       }
     } else {
+      console.log('Product not found in store, fetching from API...');
       // Try to fetch the product
       await productStore.fetchProductById(productId.value);
       const fetchedProduct = productStore.currentProduct;
 
       if (fetchedProduct) {
+        console.log('Fetched product from API:', fetchedProduct);
         // Copy product data to form
         Object.assign(form, fetchedProduct);
 
@@ -724,9 +747,13 @@ const loadProduct = async () => {
         if (fetchedProduct.specifications) {
           specKeys.value = Object.keys(fetchedProduct.specifications);
         }
+      } else {
+        console.log('Product not found in API');
+        error.value = 'Product not found';
       }
     }
   } catch (err: any) {
+    console.error('Error loading product:', err);
     error.value = err.message || 'Failed to load product';
   } finally {
     loading.value = false;
@@ -735,12 +762,23 @@ const loadProduct = async () => {
 
 // Watch for product ID changes
 watch(productId, () => {
+  console.log('Product ID changed to:', productId.value);
   loadProduct();
 });
 
 // Initialize component
 onMounted(() => {
-  loadProduct();
+  console.log('Admin product edit page mounted, loading products...');
+
+  // Pre-fetch all products if not already loaded
+  if (productStore.products.length === 0) {
+    productStore.fetchProducts().then(() => {
+      console.log('Products loaded:', productStore.products.length);
+      loadProduct();
+    });
+  } else {
+    loadProduct();
+  }
 });
 </script>
 
