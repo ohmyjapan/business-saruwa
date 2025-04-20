@@ -18,7 +18,7 @@
     </div>
 
     <!-- Product not found -->
-    <div v-else-if="!product" class="py-8 text-center">
+    <div v-else-if="!currentProduct" class="py-8 text-center">
       <h1 class="text-2xl font-bold mb-4">Product Not Found</h1>
       <p class="text-secondary-600 mb-6">The product you're looking for doesn't exist or has been removed.</p>
       <button @click="goBack" class="btn-primary">
@@ -27,18 +27,18 @@
     </div>
 
     <!-- Debug info - REMOVE AFTER DEBUGGING -->
-    <div class="bg-gray-100 p-4 rounded-md mb-4">
+    <div v-else class="bg-gray-100 p-4 rounded-md mb-4">
       <h3 class="font-bold mb-2">Debug Info:</h3>
       <p>Route ID: {{ $route.params.id }}</p>
-      <p>Product found: {{ product ? 'Yes' : 'No' }}</p>
-      <p>Loading: {{ loading }}</p>
-      <p>Error: {{ error }}</p>
+      <p>Product found: {{ currentProduct ? 'Yes' : 'No' }}</p>
+      <p>Product name: {{ currentProduct?.name || 'N/A' }}</p>
+      <p>Product ID: {{ currentProduct?.id || 'N/A' }}</p>
     </div>
 
     <!-- Edit form -->
-    <div v-else>
+    <div v-if="currentProduct">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-secondary-900">Edit Product</h1>
+        <h1 class="text-2xl font-bold text-secondary-900">Edit Product: {{ currentProduct.name }}</h1>
         <div class="flex space-x-3">
           <button
               @click="goBack"
@@ -138,7 +138,7 @@
                   class="form-select"
               >
                 <option value="">Select a category</option>
-                <option v-for="category in categories" :key="category" :value="category">
+                <option v-for="category in availableCategories" :key="category" :value="category">
                   {{ category }}
                 </option>
               </select>
@@ -411,106 +411,46 @@
           />
         </div>
       </div>
-
-      <!-- Specifications Section -->
-      <div class="bg-white rounded-lg shadow-card mt-6 mb-6">
-        <div class="p-6 border-b border-secondary-200">
-          <h2 class="text-lg font-medium text-secondary-900">Specifications</h2>
-          <p class="text-sm text-secondary-500 mt-1">Add technical specifications</p>
-        </div>
-        <div class="p-6">
-          <div class="space-y-4">
-            <div
-                v-for="(spec, key, index) in form.specifications"
-                :key="index"
-                class="flex gap-4"
-            >
-              <input
-                  v-model="specKeys[index]"
-                  type="text"
-                  class="form-input w-1/3"
-                  placeholder="Specification name"
-              />
-              <input
-                  v-model="form.specifications[key]"
-                  type="text"
-                  class="form-input flex-1"
-                  placeholder="Specification value"
-              />
-              <button
-                  type="button"
-                  @click="removeSpecification(key)"
-                  class="btn-outline text-danger-600 hover:bg-danger-50"
-              >
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
-            <button
-                type="button"
-                @click="addSpecification"
-                class="btn-outline flex items-center"
-            >
-              <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-              </svg>
-              Add Specification
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-// Import types from your types directory instead of from store files directly
-import type { Product, ProductImage } from '~/types';
-import { useProductStore } from '~/stores/products';
-import { randomUUID } from 'crypto';
 
 // Tell Nuxt to use the admin layout
 definePageMeta({
   layout: 'admin'
 });
 
+// Browser-compatible UUID generator
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const route = useRoute();
 const router = useRouter();
-const productStore = useProductStore();
 const config = useRuntimeConfig();
 
 // Refs
-const fileInput = ref<HTMLInputElement | null>(null);
+const fileInput = ref(null);
 const newTag = ref('');
-const specKeys = ref<string[]>([]);
+const specKeys = ref([]);
 
 // State
 const loading = ref(true);
-const error = ref<string | null>(null);
+const error = ref(null);
 const isSaving = ref(false);
-const validationErrors = reactive<Record<string, string>>({});
+const validationErrors = reactive({});
+const localProducts = ref([]);
 
-// Get product ID from route
-const productId = computed(() => route.params.id as string);
-
-// Explicitly check and log the route and params for debugging
-watch(() => route.params, (newParams) => {
-  console.log('Route params changed:', newParams);
-}, { immediate: true });
-
-// Computed property to get product from store
-const product = computed(() => {
-  console.log('Looking for product with ID:', productId.value);
-  const foundProduct = productStore.getProductById(productId.value);
-  console.log('Found product in store:', foundProduct);
-  return foundProduct;
-});
-
-// Default empty form state
-const emptyForm = {
+// Form data
+const form = reactive({
   id: '',
   name: '',
   description: '',
@@ -519,7 +459,7 @@ const emptyForm = {
   brand: '',
   category: '',
   subcategory: '',
-  tags: [] as string[],
+  tags: [],
   minOrderQuantity: 1,
   stock: 0,
   pricing: {
@@ -527,23 +467,55 @@ const emptyForm = {
     currency: 'JPY',
     discountPercentage: 0
   },
-  images: [] as ProductImage[],
-  specifications: {} as Record<string, string>,
+  images: [],
+  specifications: {},
   isActive: true,
   isNew: false,
-  isFeatured: false,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  isFeatured: false
+});
+
+// Get the product ID from the route
+const productId = computed(() => {
+  const id = route.params.id;
+  console.log("Product ID from route:", id);
+  return id;
+});
+
+// Available categories
+const availableCategories = [
+  'Electronics',
+  'Kitchen',
+  'Clothing',
+  'Sports',
+  'Home Goods',
+  'Office Supplies'
+];
+
+// Get products from localStorage (shared with products list page)
+const loadProductsFromStorage = () => {
+  try {
+    const storedProducts = localStorage.getItem('adminProducts');
+    if (storedProducts) {
+      return JSON.parse(storedProducts);
+    }
+  } catch (err) {
+    console.error("Error loading products from storage:", err);
+  }
+  return [];
 };
 
-// Form reactive state
-const form = reactive({ ...emptyForm });
+// Find the current product
+const currentProduct = computed(() => {
+  console.log("Looking for product with ID:", productId.value);
 
-// Get available categories from the store
-const categories = computed(() => productStore.categories);
+  const product = localProducts.value.find(p => p.id === productId.value);
+  console.log("Found product:", product ? `${product.name} (${product.id})` : "Not found");
+
+  return product || null;
+});
 
 // Helper function to get image URL
-const getImageUrl = (imagePath: string): string => {
+const getImageUrl = (imagePath) => {
   // Check if the path is already a URL
   if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
     return imagePath;
@@ -564,7 +536,7 @@ const addTag = () => {
 };
 
 // Handle removing a tag
-const removeTag = (index: number) => {
+const removeTag = (index) => {
   form.tags.splice(index, 1);
 };
 
@@ -576,8 +548,8 @@ const openFileInput = () => {
 };
 
 // Handle file upload
-const handleFileUpload = (event: Event) => {
-  const input = event.target as HTMLInputElement;
+const handleFileUpload = (event) => {
+  const input = event.target;
   if (input.files && input.files.length > 0) {
     // In a real application, you would upload these files to a server
     // For now, we'll just create image objects with local URLs
@@ -587,8 +559,8 @@ const handleFileUpload = (event: Event) => {
         if (e.target && e.target.result) {
           const isFirstImage = form.images.length === 0;
           form.images.push({
-            id: randomUUID(),
-            src: e.target.result as string,
+            id: generateUUID(),
+            src: e.target.result,
             alt: file.name,
             isDefault: isFirstImage
           });
@@ -603,14 +575,14 @@ const handleFileUpload = (event: Event) => {
 };
 
 // Handle setting default image
-const setDefaultImage = (index: number) => {
+const setDefaultImage = (index) => {
   form.images.forEach((image, i) => {
     image.isDefault = i === index;
   });
 };
 
 // Handle deleting an image
-const deleteImage = (index: number) => {
+const deleteImage = (index) => {
   const wasDefault = form.images[index].isDefault;
   form.images.splice(index, 1);
 
@@ -620,29 +592,10 @@ const deleteImage = (index: number) => {
   }
 };
 
-// Handle adding a specification
-const addSpecification = () => {
-  const newKey = `spec_${Object.keys(form.specifications).length + 1}`;
-  form.specifications[newKey] = '';
-  specKeys.value.push(newKey);
-};
-
-// Handle removing a specification
-const removeSpecification = (key: string) => {
-  const index = specKeys.value.findIndex(k => k === key || form.specifications[k] === form.specifications[key]);
-  if (index !== -1) {
-    specKeys.value.splice(index, 1);
-  }
-  delete form.specifications[key];
-};
-
 // Validate form
-const validateForm = (): boolean => {
-  validationErrors.name = '';
-  validationErrors.janCode = '';
-  validationErrors.sku = '';
-  validationErrors.stock = '';
-  validationErrors['pricing.basePrice'] = '';
+const validateForm = () => {
+  // Reset validation errors
+  Object.keys(validationErrors).forEach(key => delete validationErrors[key]);
 
   let isValid = true;
 
@@ -688,119 +641,76 @@ const saveProduct = async () => {
   try {
     isSaving.value = true;
 
-    // Update specifications from spec keys
-    const updatedSpecs: Record<string, string> = {};
-    specKeys.value.forEach((key, index) => {
-      const oldKey = Object.keys(form.specifications)[index];
-      if (key && oldKey) {
-        updatedSpecs[key] = form.specifications[oldKey];
-      }
-    });
-    form.specifications = updatedSpecs;
+    // Update the product in localStorage
+    const index = localProducts.value.findIndex(p => p.id === form.id);
+    if (index !== -1) {
+      localProducts.value[index] = { ...form };
+      localStorage.setItem('adminProducts', JSON.stringify(localProducts.value));
+    }
 
-    // Update the updatedAt timestamp
-    form.updatedAt = new Date().toISOString();
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-    // In a real application, you would call your API here
-    // For example:
-    // await useFetch(`/api/admin/products/${form.id}`, {
-    //   method: 'PUT',
-    //   body: form
-    // });
-
-    // For now, we'll just wait 1 second to simulate an API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // TODO: Update product in store/database
-    console.log('Product saved:', form);
-
-    // Show success message
-    alert('Product updated successfully!');
-
-    // Navigate back to products list
-    router.push('/admin/products');
-  } catch (err: any) {
-    console.error('Error saving product:', err);
-    error.value = err.message || 'Failed to save product';
+    alert("Product updated successfully!");
+    goBack();
+  } catch (err) {
+    console.error("Error saving product:", err);
+    error.value = `Failed to save product: ${err.message}`;
   } finally {
     isSaving.value = false;
   }
 };
 
-// Navigate back
+// Navigate back to products list
 const goBack = () => {
   router.push('/admin/products');
 };
 
-// Load product data
-const loadProduct = async () => {
+// Initialize
+onMounted(async () => {
+  console.log("Product detail page mounted");
+  console.log("Route params:", route.params);
+
   try {
     loading.value = true;
-    error.value = null;
 
-    console.log('Loading product with ID:', productId.value);
+    // Load products from localStorage
+    localProducts.value = loadProductsFromStorage();
+    console.log("Loaded products:", localProducts.value.length);
 
-    // First ensure we have products loaded
-    if (productStore.products.length === 0) {
-      console.log('Products array is empty, fetching all products...');
-      await productStore.fetchProducts();
-      console.log('Products loaded:', productStore.products.length);
-    }
+    // Simulate loading delay
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Get product from store by ID
-    let currentProduct = productStore.getProductById(productId.value);
+    if (currentProduct.value) {
+      // Initialize form with product data
+      Object.assign(form, currentProduct.value);
 
-    if (currentProduct) {
-      console.log('Found product in store:', currentProduct.name);
-      // Copy product data to form
-      Object.assign(form, JSON.parse(JSON.stringify(currentProduct)));
-
-      // Initialize spec keys
-      if (currentProduct.specifications) {
-        specKeys.value = Object.keys(currentProduct.specifications);
+      // Initialize spec keys if needed
+      if (currentProduct.value.specifications) {
+        specKeys.value = Object.keys(currentProduct.value.specifications);
       }
     } else {
-      console.log('Product not found in store, fetching from API...');
-      try {
-        // Try to fetch the product
-        currentProduct = await productStore.fetchProductById(productId.value);
-
-        if (currentProduct) {
-          console.log('Fetched product from API:', currentProduct.name);
-          // Copy product data to form
-          Object.assign(form, JSON.parse(JSON.stringify(currentProduct)));
-
-          // Initialize spec keys
-          if (currentProduct.specifications) {
-            specKeys.value = Object.keys(currentProduct.specifications);
-          }
-        } else {
-          console.log('Product not found in API');
-          error.value = 'Product not found';
-        }
-      } catch (err) {
-        console.error('Error fetching product:', err);
-        error.value = 'Failed to fetch product';
-      }
+      error.value = "Product not found. Make sure you've selected a valid product from the list.";
     }
-  } catch (err: any) {
-    console.error('Error loading product:', err);
-    error.value = err.message || 'Failed to load product';
+  } catch (err) {
+    console.error("Error loading product:", err);
+    error.value = `Failed to load product: ${err.message}`;
   } finally {
     loading.value = false;
   }
-};
+});
 
 // Watch for product ID changes
 watch(productId, () => {
-  console.log('Product ID changed to:', productId.value);
-  loadProduct();
-}, { immediate: true });
-
-// Initialize component
-onMounted(() => {
-  console.log('Admin product edit page mounted');
-  loadProduct();
+  loading.value = true;
+  // Load the product when the ID changes
+  if (currentProduct.value) {
+    Object.assign(form, currentProduct.value);
+    loading.value = false;
+  } else {
+    error.value = "Product not found";
+    loading.value = false;
+  }
 });
 </script>
 

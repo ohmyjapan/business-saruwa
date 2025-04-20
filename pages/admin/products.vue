@@ -18,26 +18,26 @@
         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
         </svg>
-        <input type="text" placeholder="Search products..." />
+        <input type="text" v-model="searchQuery" placeholder="Search products..." />
       </div>
 
       <!-- Filter dropdowns -->
       <div class="filter-controls">
-        <select>
+        <select v-model="categoryFilter">
           <option value="">All Categories</option>
-          <option value="electronics">Electronics</option>
-          <option value="clothing">Clothing</option>
-          <option value="kitchen">Kitchen</option>
+          <option v-for="category in availableCategories" :key="category" :value="category">
+            {{ category }}
+          </option>
         </select>
 
-        <select>
+        <select v-model="stockFilter">
           <option value="">All Stock Status</option>
           <option value="in-stock">In Stock</option>
           <option value="low-stock">Low Stock</option>
           <option value="out-of-stock">Out of Stock</option>
         </select>
 
-        <button class="btn-outline">Clear Filters</button>
+        <button class="btn-outline" @click="clearFilters">Clear Filters</button>
       </div>
     </div>
 
@@ -104,13 +104,13 @@
           </td>
           <td>
             <div class="action-buttons">
-              <NuxtLink :to="`/admin/products/${product.id}`" class="action-btn edit-btn">
+              <button @click="editProduct(product.id)" class="action-btn edit-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                   <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
                   <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
                 </svg>
-              </NuxtLink>
-              <button class="action-btn delete-btn">
+              </button>
+              <button class="action-btn delete-btn" @click="confirmDelete(product)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                   <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
                 </svg>
@@ -128,14 +128,14 @@
         Showing 1 to {{ products.length }} of {{ totalProducts }} results
       </div>
       <div class="pagination-controls">
-        <button class="pagination-btn prev-btn" :disabled="currentPage === 1">
+        <button class="pagination-btn prev-btn" :disabled="currentPage === 1" @click="prevPage">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
             <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
           </svg>
         </button>
-        <button class="pagination-btn" :class="{ active: currentPage === 1 }">1</button>
-        <button class="pagination-btn" :class="{ active: currentPage === 2 }">2</button>
-        <button class="pagination-btn next-btn" :disabled="currentPage === totalPages">
+        <button class="pagination-btn" :class="{ active: currentPage === 1 }" @click="goToPage(1)">1</button>
+        <button class="pagination-btn" :class="{ active: currentPage === 2 }" @click="goToPage(2)">2</button>
+        <button class="pagination-btn next-btn" :disabled="currentPage === totalPages" @click="nextPage">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
             <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
           </svg>
@@ -147,81 +147,95 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 // Tell Nuxt to use the admin layout
 definePageMeta({
   layout: 'admin'
 });
 
+const router = useRouter();
+
 // Page state
 const currentPage = ref(1);
 const totalPages = ref(2);
 const totalProducts = ref(20);
+const searchQuery = ref('');
+const categoryFilter = ref('');
+const stockFilter = ref('');
 
-// Sample products data
+// Available categories for filter
+const availableCategories = [
+  'Electronics',
+  'Kitchen',
+  'Clothing',
+  'Sports'
+];
+
+// Sample products data - IMPORTANT: Using STRING IDs, not numbers
 const products = reactive([
   {
-    id: 1,
+    id: "1", // Using string ID format
     name: 'Wireless Headphones',
     brand: 'AudioTech',
     sku: 'AUDIO-WH-001',
     janCode: '4901234567890',
-    image: 'https://via.placeholder.com/400x300/3498db/FFFFFF?text=Headphones', // Using placeholder images for demo
+    image: 'https://placehold.co/400x300/3498db/fff?text=Headphones', // Fixed URL
     category: 'Electronics',
     price: 12800,
     stock: 45,
     status: 'Active'
   },
   {
-    id: 2,
+    id: "2", // Using string ID format
     name: 'Smart Watch Series 5',
     brand: 'TechGear',
     sku: 'TECH-SW-005',
     janCode: '4901234567891',
-    image: 'https://via.placeholder.com/400x300/2ecc71/FFFFFF?text=Watch',
+    image: 'https://placehold.co/400x300/2ecc71/fff?text=Watch', // Fixed URL
     category: 'Electronics',
     price: 32500,
     stock: 12,
     status: 'Active'
   },
   {
-    id: 3,
+    id: "3", // Using string ID format
     name: 'Professional Kitchen Knife Set',
     brand: 'ChefPro',
     sku: 'CHEF-KS-010',
     janCode: '4901234567892',
-    image: 'https://via.placeholder.com/400x300/e74c3c/FFFFFF?text=Knife+Set',
+    image: 'https://placehold.co/400x300/e74c3c/fff?text=Knife+Set', // Fixed URL
     category: 'Kitchen',
     price: 19800,
     stock: 25,
     status: 'Active'
   },
   {
-    id: 4,
+    id: "4", // Using string ID format
     name: 'Gaming Laptop 15"',
     brand: 'PowerGame',
     sku: 'GAME-LT-001',
     janCode: '4901234567893',
-    image: 'https://via.placeholder.com/400x300/9b59b6/FFFFFF?text=Laptop',
+    image: 'https://placehold.co/400x300/9b59b6/fff?text=Laptop', // Fixed URL
     category: 'Electronics',
     price: 129000,
     stock: 8,
     status: 'Low Stock'
   },
   {
-    id: 5,
+    id: "5", // Using string ID format
     name: 'Organic Cotton T-Shirt',
     brand: 'EcoWear',
     sku: 'ECO-TS-M-BLK',
     janCode: '4901234567894',
-    image: 'https://via.placeholder.com/400x300/f1c40f/FFFFFF?text=T-Shirt',
+    image: 'https://placehold.co/400x300/f1c40f/fff?text=T-Shirt', // Fixed URL
     category: 'Clothing',
     price: 3500,
     stock: 120,
     status: 'Active'
   },
   {
-    id: 6,
+    id: "6", // Using string ID format
     name: 'Bluetooth Speaker',
     brand: 'SoundBox',
     sku: 'SOUND-BS-001',
@@ -233,48 +247,48 @@ const products = reactive([
     status: 'Out of Stock'
   },
   {
-    id: 7,
+    id: "7", // Using string ID format
     name: 'Stainless Steel Water Bottle',
     brand: 'EcoLife',
     sku: 'ECO-WB-001',
     janCode: '4901234567896',
-    image: 'https://via.placeholder.com/400x300/1abc9c/FFFFFF?text=Water+Bottle',
+    image: 'https://placehold.co/400x300/1abc9c/fff?text=Water+Bottle', // Fixed URL
     category: 'Kitchen',
     price: 2800,
     stock: 75,
     status: 'Active'
   },
   {
-    id: 8,
+    id: "8", // Using string ID format
     name: 'Premium Yoga Mat',
     brand: 'ZenFit',
     sku: 'ZEN-YM-001',
     janCode: '4901234567897',
-    image: 'https://via.placeholder.com/400x300/34495e/FFFFFF?text=Yoga+Mat',
+    image: 'https://placehold.co/400x300/34495e/fff?text=Yoga+Mat', // Fixed URL
     category: 'Sports',
     price: 4800,
     stock: 30,
     status: 'Active'
   },
   {
-    id: 9,
+    id: "9", // Using string ID format
     name: 'Mechanical Keyboard',
     brand: 'TypeMaster',
     sku: 'TYPE-KB-001',
     janCode: '4901234567898',
-    image: 'https://via.placeholder.com/400x300/e67e22/FFFFFF?text=Keyboard',
+    image: 'https://placehold.co/400x300/e67e22/fff?text=Keyboard', // Fixed URL
     category: 'Electronics',
     price: 14500,
     stock: 18,
     status: 'Active'
   },
   {
-    id: 10,
+    id: "10", // Using string ID format
     name: 'Winter Jacket',
     brand: 'NorthStyle',
     sku: 'NORTH-WJ-M-BLU',
     janCode: '4901234567899',
-    image: 'https://via.placeholder.com/400x300/3498db/FFFFFF?text=Jacket',
+    image: 'https://placehold.co/400x300/3498db/fff?text=Jacket', // Fixed URL
     category: 'Clothing',
     price: 18000,
     stock: 5,
@@ -304,6 +318,71 @@ const getStatusClass = (status) => {
     default: return 'status-badge';
   }
 };
+
+// NEW: Navigate to product detail page with router.push
+const editProduct = (id) => {
+  console.log(`Navigating to product: ${id}`);
+
+  // Explicitly ensure ID is a string
+  const stringId = String(id);
+
+  // Use the full path for clarity
+  const path = `/admin/products/${stringId}`;
+  console.log(`Navigation path: ${path}`);
+
+  // Store products in localStorage before navigating
+  localStorage.setItem('adminProducts', JSON.stringify(products));
+
+  // Use router.push with a path object
+  router.push({
+    path: path
+  });
+};
+
+// Confirm delete function
+const confirmDelete = (product) => {
+  if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
+    console.log("Deleting product:", product.id);
+    // In a real app, you would call an API to delete the product
+    // For now, we just log the action
+  }
+};
+
+// Pagination functions
+const goToPage = (page) => {
+  currentPage.value = page;
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+// Clear filters
+const clearFilters = () => {
+  searchQuery.value = '';
+  categoryFilter.value = '';
+  stockFilter.value = '';
+};
+
+// Mount actions
+onMounted(() => {
+  console.log("Admin products page mounted");
+  console.log("Product IDs:", products.map(p => ({
+    id: p.id,
+    type: typeof p.id
+  })));
+
+  // Store products in localStorage on page load
+  localStorage.setItem('adminProducts', JSON.stringify(products));
+});
 </script>
 
 <style scoped>
