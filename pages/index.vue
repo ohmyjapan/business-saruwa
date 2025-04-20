@@ -23,11 +23,10 @@
           </div>
           <div class="md:w-1/2 mt-8 md:mt-0">
             <div class="relative bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-lg p-6 shadow-xl">
-              <img
-                  src="/images/hero-image.jpg"
-                  alt="Wholesale Products"
-                  class="rounded-lg w-full h-auto"
-              />
+              <!-- Placeholder div instead of an image -->
+              <div class="rounded-lg w-full h-64 bg-gray-200 flex items-center justify-center">
+                <span class="text-gray-600">Hero Image Placeholder</span>
+              </div>
             </div>
           </div>
         </div>

@@ -5,10 +5,12 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxtjs/tailwindcss',
-    // Remove @nuxtjs/i18n
   ],
 
   runtimeConfig: {
+    // MongoDB URI (server-side only)
+    MONGODB_URI: process.env.MONGODB_URI,
+
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
       uploadUrl: process.env.NUXT_PUBLIC_UPLOAD_URL || '/uploads',
@@ -56,8 +58,6 @@ export default defineNuxtConfig({
   build: {
     transpile: ['@headlessui/vue', '@heroicons/vue']
   },
-
-  // Remove i18n configuration
 
   compatibilityDate: '2025-04-15'
 })

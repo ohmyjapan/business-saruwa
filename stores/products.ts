@@ -101,12 +101,26 @@ export const useProductStore = defineStore('products', {
     },
 
     actions: {
-        async fetchProducts() {
+        async fetchProducts(filters = {}) {
             this.loading = true;
             this.error = null;
 
             try {
-                const { data } = await useFetch('/api/products');
+                // Build query string from filters
+                const queryParams = new URLSearchParams();
+                Object.entries(filters).forEach(([key, value]) => {
+                    if (value) queryParams.append(key, value.toString());
+                });
+
+                const queryString = queryParams.toString();
+                const url = queryString ? `/api/products?${queryString}` : '/api/products';
+
+                const { data, error } = await useFetch(url);
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to fetch products');
+                }
+
                 this.products = data.value as Product[];
 
                 // Extract featured products
@@ -148,14 +162,27 @@ export const useProductStore = defineStore('products', {
 
             try {
                 console.log('Fetching product with ID:', id);
-                const { data } = await useFetch(`/api/products/${id}`);
+                const { data, error } = await useFetch(`/api/products/${id}`);
+
+                if (error.value) {
+                    throw new Error(error.value.message || `Failed to fetch product with ID: ${id}`);
+                }
 
                 if (data.value) {
                     // Store the product in the currentProduct ref
                     this.currentProduct = data.value as Product;
 
+                    // Handle MongoDB _id vs id compatibility
+                    if (this.currentProduct._id && !this.currentProduct.id) {
+                        this.currentProduct.id = this.currentProduct._id.toString();
+                    }
+
                     // Also add it to the products array if it's not already there
-                    const existingIndex = this.products.findIndex(p => p.id === id);
+                    const existingIndex = this.products.findIndex(p =>
+                        p.id === id ||
+                        (p._id && p._id.toString() === id)
+                    );
+
                     if (existingIndex >= 0) {
                         // Update existing product
                         this.products[existingIndex] = this.currentProduct;
@@ -178,6 +205,118 @@ export const useProductStore = defineStore('products', {
             }
         },
 
+        async createProduct(productData: Partial<Product>) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const { data, error } = await useFetch('/api/products', {
+                    method: 'POST',
+                    body: productData
+                });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to create product');
+                }
+
+                // Refresh product list after creating new product
+                await this.fetchProducts();
+
+                return data.value;
+            } catch (error: any) {
+                this.error = error.message || 'Failed to create product';
+                console.error('Error creating product:', error);
+                return null;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async updateProduct(id: string, productData: Partial<Product>) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const { data, error } = await useFetch(`/api/products/${id}`, {
+                    method: 'PUT',
+                    body: productData
+                });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to update product');
+                }
+
+                // Update the product in the store
+                const updatedProduct = data.value as Product;
+
+                // Handle MongoDB _id vs id compatibility
+                if (updatedProduct._id && !updatedProduct.id) {
+                    updatedProduct.id = updatedProduct._id.toString();
+                }
+
+                // Find and update the product in the products array
+                const index = this.products.findIndex(p =>
+                    p.id === id ||
+                    (p._id && p._id.toString() === id)
+                );
+
+                if (index !== -1) {
+                    this.products[index] = updatedProduct;
+                }
+
+                // Update currentProduct if it's the same product
+                if (this.currentProduct &&
+                    (this.currentProduct.id === id ||
+                        (this.currentProduct._id && this.currentProduct._id.toString() === id))) {
+                    this.currentProduct = updatedProduct;
+                }
+
+                return updatedProduct;
+            } catch (error: any) {
+                this.error = error.message || 'Failed to update product';
+                console.error(`Error updating product ${id}:`, error);
+                return null;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteProduct(id: string) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const { error } = await useFetch(`/api/products/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to delete product');
+                }
+
+                // Remove the product from the store
+                this.products = this.products.filter(p =>
+                    p.id !== id &&
+                    (!p._id || p._id.toString() !== id)
+                );
+
+                // Clear currentProduct if it's the deleted product
+                if (this.currentProduct &&
+                    (this.currentProduct.id === id ||
+                        (this.currentProduct._id && this.currentProduct._id.toString() === id))) {
+                    this.currentProduct = null;
+                }
+
+                return true;
+            } catch (error: any) {
+                this.error = error.message || 'Failed to delete product';
+                console.error(`Error deleting product ${id}:`, error);
+                return false;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async uploadProductsFromExcel(file: File) {
             this.loading = true;
             this.error = null;
@@ -186,10 +325,14 @@ export const useProductStore = defineStore('products', {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const { data } = await useFetch('/api/admin/products', {
+                const { data, error } = await useFetch('/api/admin/products', {
                     method: 'POST',
                     body: formData
                 });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to upload products from Excel');
+                }
 
                 // Refresh products list
                 await this.fetchProducts();
@@ -215,10 +358,14 @@ export const useProductStore = defineStore('products', {
                     formData.append(`images`, file);
                 });
 
-                const { data } = await useFetch('/api/admin/images', {
+                const { data, error } = await useFetch('/api/admin/images', {
                     method: 'POST',
                     body: formData
                 });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to upload product images');
+                }
 
                 // Refresh products to get updated images
                 await this.fetchProducts();

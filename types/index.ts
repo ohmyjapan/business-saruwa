@@ -1,5 +1,11 @@
 // types/index.ts
-export interface ProductImage {
+
+// Add MongoDB specific types
+export interface WithMongoId {
+    _id?: string;
+}
+
+export interface ProductImage extends WithMongoId {
     id: string;
     src: string;
     alt: string;
@@ -12,7 +18,7 @@ export interface ProductPrice {
     minQuantity?: number;
 }
 
-export interface ProductVariant {
+export interface ProductVariant extends WithMongoId {
     id: string;
     name: string;
     sku: string;
@@ -21,7 +27,7 @@ export interface ProductVariant {
     prices: ProductPrice[];
 }
 
-export interface Product {
+export interface Product extends WithMongoId {
     id: string;
     name: string;
     description: string;
@@ -119,4 +125,18 @@ export interface PriceSummary {
     discount: number;
     tax: number;
     total: number;
+}
+
+// MongoDB response type helpers
+export interface MongoDBDeleteResult {
+    acknowledged: boolean;
+    deletedCount: number;
+}
+
+export interface MongoDBUpdateResult {
+    acknowledged: boolean;
+    matchedCount: number;
+    modifiedCount: number;
+    upsertedCount: number;
+    upsertedId: string | null;
 }
