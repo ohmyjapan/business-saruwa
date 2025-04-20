@@ -90,7 +90,7 @@
         <div class="bg-white rounded-lg shadow-sm">
           <div class="px-6 py-4 border-b border-secondary-200 flex justify-between items-center">
             <h2 class="font-semibold text-secondary-900">Recent Orders</h2>
-            <a href="/admin/orders" class="text-sm text-primary-600 hover:text-primary-700">
+            <a href="/pages/admin/orders" class="text-sm text-primary-600 hover:text-primary-700">
               View all
             </a>
           </div>
