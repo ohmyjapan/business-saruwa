@@ -2,6 +2,26 @@
 import { defineStore } from 'pinia';
 import type { Product, ProductImage, ProductFilter } from '~/types';
 
+interface ImportResult {
+    success: boolean;
+    importedCount?: number;
+    invalidItems?: Array<{
+        product: Partial<Product>;
+        reasons: string[];
+        rowIndex?: number;
+    }>;
+    error?: string;
+    validationSummary?: Record<string, any>;
+    janCodeExamples?: string[];
+}
+
+interface UploadImageResult {
+    success: boolean;
+    uploadedCount?: number;
+    skippedCount?: number;
+    error?: string;
+}
+
 export const useProductStore = defineStore('products', {
     state: () => ({
         products: [] as Product[],
@@ -37,6 +57,11 @@ export const useProductStore = defineStore('products', {
         },
 
         filteredProducts: (state) => {
+            // Guard against null products array
+            if (!state.products) {
+                return [];
+            }
+
             let filtered = state.products.filter(p => p.isActive);
 
             // Apply category filter
@@ -52,7 +77,7 @@ export const useProductStore = defineStore('products', {
             // Apply tags filter
             if (state.filters.tags && state.filters.tags.length > 0) {
                 filtered = filtered.filter(p =>
-                    p.tags.some(tag => state.filters.tags.includes(tag))
+                    p.tags && p.tags.some(tag => state.filters.tags.includes(tag))
                 );
             }
 
@@ -74,12 +99,12 @@ export const useProductStore = defineStore('products', {
             if (state.filters.query) {
                 const query = state.filters.query.toLowerCase();
                 filtered = filtered.filter(p =>
-                    p.name.toLowerCase().includes(query) ||
-                    p.description.toLowerCase().includes(query) ||
-                    p.janCode.toLowerCase().includes(query) ||
-                    p.sku.toLowerCase().includes(query) ||
-                    p.brand.toLowerCase().includes(query) ||
-                    p.tags.some(tag => tag.toLowerCase().includes(query))
+                    (p.name && p.name.toLowerCase().includes(query)) ||
+                    (p.description && p.description.toLowerCase().includes(query)) ||
+                    (p.janCode && p.janCode.toLowerCase().includes(query)) ||
+                    (p.sku && p.sku.toLowerCase().includes(query)) ||
+                    (p.brand && p.brand.toLowerCase().includes(query)) ||
+                    (p.tags && p.tags.some(tag => tag.toLowerCase().includes(query)))
                 );
             }
 
@@ -87,11 +112,13 @@ export const useProductStore = defineStore('products', {
         },
 
         priceRange: (state) => {
-            if (state.products.length === 0) return { min: 0, max: 0 };
+            if (!state.products || state.products.length === 0) return { min: 0, max: 0 };
 
             const prices = state.products
-                .filter(p => p.isActive)
+                .filter(p => p.isActive && p.pricing && p.pricing.basePrice)
                 .map(p => p.pricing.basePrice);
+
+            if (prices.length === 0) return { min: 0, max: 0 };
 
             return {
                 min: Math.min(...prices),
@@ -115,21 +142,36 @@ export const useProductStore = defineStore('products', {
                 const queryString = queryParams.toString();
                 const url = queryString ? `/api/products?${queryString}` : '/api/products';
 
+                console.log('Fetching products from URL:', url);
                 const { data, error } = await useFetch(url);
 
                 if (error.value) {
                     throw new Error(error.value.message || 'Failed to fetch products');
                 }
 
-                this.products = data.value as Product[];
+                // Handle empty response
+                if (!data.value) {
+                    console.warn('No products data returned from API');
+                    this.products = [];
+                    return;
+                }
+
+                // Safe assignment with type checking
+                if (Array.isArray(data.value)) {
+                    this.products = data.value as Product[];
+                } else {
+                    console.warn('Unexpected response format from API:', data.value);
+                    this.products = [];
+                    return;
+                }
 
                 // Extract featured products
-                this.featuredProducts = this.products.filter(p => p.isFeatured && p.isActive);
+                this.featuredProducts = this.products.filter(p => p.isFeatured && p.isActive) || [];
 
                 // Extract new arrivals
                 this.newArrivals = this.products
                     .filter(p => p.isNew && p.isActive)
-                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
 
                 // Extract unique categories
                 const uniqueCategories = new Set<string>();
@@ -146,11 +188,18 @@ export const useProductStore = defineStore('products', {
                 this.brands = Array.from(uniqueBrands);
 
                 // Set initial price range for filters
-                this.filters.minPrice = this.priceRange.min;
-                this.filters.maxPrice = this.priceRange.max;
+                const { min, max } = this.priceRange;
+                this.filters.minPrice = min;
+                this.filters.maxPrice = max;
+
+                console.log(`Fetched ${this.products.length} products`);
             } catch (error: any) {
                 this.error = error.message || 'Failed to fetch products';
                 console.error('Error fetching products:', error);
+                // Initialize with empty arrays to prevent null reference errors
+                this.products = [];
+                this.featuredProducts = [];
+                this.newArrivals = [];
             } finally {
                 this.loading = false;
             }
@@ -317,6 +366,160 @@ export const useProductStore = defineStore('products', {
             }
         },
 
+        // Import products directly from transformed data
+        async importProductsFromData(productsData: Partial<Product>[]): Promise<ImportResult> {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                if (!productsData || productsData.length === 0) {
+                    return {
+                        success: false,
+                        error: 'No product data provided'
+                    };
+                }
+
+                console.log(`Importing ${productsData.length} products...`);
+                console.log('Sample product data:', productsData[0]);
+
+                // Validate products before sending to the server
+                const validProducts: Partial<Product>[] = [];
+                const invalidItems: {
+                    product: Partial<Product>;
+                    reasons: string[];
+                    rowIndex: number;
+                }[] = [];
+
+                // Validation summary for error reporting
+                const validationSummary = {
+                    missingName: 0,
+                    missingJanCode: 0,
+                    missingSku: 0,
+                    invalidPrice: 0,
+                    duplicateJanCode: 0,
+                    otherErrors: 0
+                };
+
+                // Track JAN codes for duplicate detection
+                const janCodes = new Set<string>();
+                const janCodeExamples: string[] = [];
+
+                productsData.forEach((product, index) => {
+                    const validationErrors: string[] = [];
+
+                    // Check required fields
+                    if (!product.name) {
+                        validationErrors.push('Product name is required');
+                        validationSummary.missingName++;
+                    }
+
+                    if (!product.janCode) {
+                        validationErrors.push('JAN Code is required');
+                        validationSummary.missingJanCode++;
+                    }
+
+                    if (!product.sku) {
+                        validationErrors.push('SKU is required');
+                        validationSummary.missingSku++;
+                    }
+
+                    if (!product.pricing?.basePrice || product.pricing.basePrice <= 0) {
+                        validationErrors.push('Base price must be greater than 0');
+                        validationSummary.invalidPrice++;
+                    }
+
+                    // JAN Code format check - relaxed for better compatibility with various formats
+                    if (product.janCode) {
+                        // Clean the JAN code by removing non-numeric characters
+                        const cleanJanCode = product.janCode.replace(/[^0-9]/g, '');
+
+                        if (cleanJanCode.length < 8 || cleanJanCode.length > 14) {
+                            validationErrors.push(`JAN Code "${product.janCode}" has invalid length (should be 8-14 digits)`);
+
+                            // Collect problematic JAN codes for reporting
+                            if (janCodeExamples.length < 5) {
+                                janCodeExamples.push(product.janCode);
+                            }
+                        }
+
+                        // Standardize JAN code
+                        product.janCode = cleanJanCode;
+
+                        // Check for duplicate JAN codes within the import data
+                        if (janCodes.has(cleanJanCode)) {
+                            validationErrors.push(`Duplicate JAN Code (${cleanJanCode}) found in import data`);
+                            validationSummary.duplicateJanCode++;
+                        } else {
+                            janCodes.add(cleanJanCode);
+                        }
+                    }
+
+                    if (validationErrors.length === 0) {
+                        validProducts.push(product);
+                    } else {
+                        invalidItems.push({
+                            product,
+                            reasons: validationErrors,
+                            rowIndex: index
+                        });
+
+                        // Count other errors
+                        if (!validationErrors.some(err =>
+                            err.includes('name') ||
+                            err.includes('JAN Code') ||
+                            err.includes('SKU') ||
+                            err.includes('price'))) {
+                            validationSummary.otherErrors++;
+                        }
+                    }
+                });
+
+                if (validProducts.length === 0) {
+                    console.error('No valid products found after validation');
+                    return {
+                        success: false,
+                        error: 'No valid products to import',
+                        invalidItems,
+                        validationSummary,
+                        janCodeExamples
+                    };
+                }
+
+                console.log(`Found ${validProducts.length} valid products after validation`);
+
+                // Send valid products to the API
+                const { data, error } = await useFetch('/api/admin/products/batch', {
+                    method: 'POST',
+                    body: { products: validProducts }
+                });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to import products');
+                }
+
+                // Refresh products list
+                await this.fetchProducts();
+
+                return {
+                    success: true,
+                    importedCount: validProducts.length,
+                    invalidItems
+                };
+            } catch (error: any) {
+                this.error = error.message || 'Failed to import products';
+                console.error('Error importing products:', error);
+
+                return {
+                    success: false,
+                    error: error.message || 'Failed to import products',
+                    invalidItems: []
+                };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Original method for Excel file upload (kept for backward compatibility)
         async uploadProductsFromExcel(file: File) {
             this.loading = true;
             this.error = null;
@@ -346,7 +549,41 @@ export const useProductStore = defineStore('products', {
             }
         },
 
-        async uploadProductImages(janCode: string, files: File[]) {
+        // Upload product images with FormData
+        async uploadProductImages(formData: FormData): Promise<UploadImageResult> {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const { data, error } = await useFetch('/api/admin/images', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (error.value) {
+                    throw new Error(error.value.message || 'Failed to upload product images');
+                }
+
+                // Return result
+                return {
+                    success: true,
+                    uploadedCount: data.value?.uploadedCount || 0
+                };
+            } catch (error: any) {
+                this.error = error.message || 'Failed to upload product images';
+                console.error('Error uploading images:', error);
+
+                return {
+                    success: false,
+                    error: error.message || 'Failed to upload product images'
+                };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Original method for single product image upload (kept for backward compatibility)
+        async uploadProductImagesOld(janCode: string, files: File[]) {
             this.loading = true;
             this.error = null;
 

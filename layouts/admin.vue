@@ -40,7 +40,7 @@
             <span>Categories</span>
           </NuxtLink>
 
-          <NuxtLink to="/admin/import" class="nav-link" :class="{ 'active': route.path === '/admin/import' }">
+          <NuxtLink to="/admin/import" class="nav-link" :class="{ 'active': route.path.startsWith('/admin/import') }">
             <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
@@ -153,7 +153,11 @@ const pageTitle = computed(() => {
     case '/admin/import': return 'Import Products';
     case '/admin/orders': return 'Orders';
     case '/admin/settings': return 'Settings';
-    default: return 'Admin Panel';
+    default:
+      // Handle nested routes
+      if (route.path.startsWith('/admin/import')) return 'Import Products';
+      if (route.path.startsWith('/admin/products')) return 'Products';
+      return 'Admin Panel';
   }
 });
 
@@ -292,7 +296,7 @@ onBeforeUnmount(() => {
   transition: all 150ms ease-in-out;
 }
 
-/* NEW: Add increased spacing for sidebar icons */
+/* Add increased spacing for sidebar icons */
 .nav-link svg {
   margin-right: 0.75rem !important; /* Force more spacing */
 }
@@ -432,7 +436,7 @@ onBeforeUnmount(() => {
   border-top: 1px solid #e2e8f0;
 }
 
-/* Main content - Fix for extra bottom space */
+/* Main content */
 .admin-main {
   flex: 1;
   padding: 1rem;
